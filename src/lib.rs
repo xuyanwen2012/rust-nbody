@@ -1,4 +1,4 @@
-mod vec2;
+pub mod vec2;
 
 use crate::vec2::Vec2;
 use rand::{thread_rng, Rng};
@@ -14,6 +14,7 @@ pub struct Particle {
     pub mass: f64,
 }
 
+#[derive(Clone)]
 pub struct ParticleList {
     time: usize,
     bodies: (Vec<Particle>, Vec<Particle>),
@@ -51,7 +52,7 @@ impl ParticleList {
         }
     }
 
-    fn next_state_seq(&mut self) -> &[Particle] {
+    pub fn next_state_seq(&mut self) -> &[Particle] {
         let (in_bodies, out_bodies) = if (self.time & 1) == 0 {
             (&self.bodies.0, &mut self.bodies.1)
         } else {
@@ -70,7 +71,7 @@ impl ParticleList {
         out_bodies
     }
 
-    fn next_state_par(&mut self) -> &[Particle] {
+    pub fn next_state_par(&mut self) -> &[Particle] {
         let (in_bodies, out_bodies) = if (self.time & 1) == 0 {
             (&self.bodies.0, &mut self.bodies.1)
         } else {
