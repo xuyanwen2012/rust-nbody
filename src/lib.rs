@@ -6,6 +6,7 @@ use rayon::prelude::*;
 
 const DT: f64 = 1e-7; // It has to be set to e-7 in order to match to the Taichi Result.
 
+#[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Particle {
     pub position: Vec2,
@@ -92,10 +93,9 @@ impl ParticleList {
     }
 }
 
-// N-body related
 fn gravity_func(distance: Vec2) -> Vec2 {
     let l2 = distance.norm_sqr() + 1e-3;
-    distance * (l2.powi((-3) / 2))
+    distance * (l2.powf((-3.0) / 2.0))
 }
 
 fn get_raw_gravity_at(pos: Vec2, bodies: &[Particle]) -> Vec2 {
