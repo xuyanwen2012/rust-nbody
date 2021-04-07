@@ -92,6 +92,8 @@ impl ParticleList {
 
         out_bodies
     }
+
+    pub fn get_next_state_par(&self) {}
 }
 
 fn gravity_func(distance: Vec2) -> Vec2 {
