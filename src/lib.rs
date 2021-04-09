@@ -1,6 +1,6 @@
-pub mod vec2;
+mod qtree;
 
-use crate::vec2::Vec2;
+use cgmath::{Array, Vector2, Zero};
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 
@@ -9,8 +9,8 @@ const DT: f64 = 1e-7; // It has to be set to e-7 in order to match to the Taichi
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Particle {
-    pub position: Vec2,
-    pub velocity: Vec2,
+    pub position: Vector2<f64>,
+    pub velocity: Vector2<f64>,
     pub mass: f64,
 }
 
@@ -29,11 +29,11 @@ impl Universe {
                 let a = rng.gen::<f64>() * std::f64::consts::TAU;
                 let r = rng.gen::<f64>().sqrt() * 0.3;
 
-                let position = Vec2 {
+                let position = Vector2 {
                     x: a.cos() * r + 0.5,
                     y: a.sin() * r + 0.5,
                 };
-                let velocity = Vec2::zeros();
+                let velocity = Vector2::zero();
                 let mass = rng.gen::<f64>() * 1.4 + 0.1;
 
                 Particle {
@@ -92,23 +92,22 @@ impl Universe {
 
         out_bodies
     }
-
-    pub fn get_next_state_par(&self) {}
 }
 
-fn gravity_func(distance: Vec2) -> Vec2 {
-    let l2 = distance.norm_sqr() + 1e-3;
+fn gravity_func(distance: Vector2<f64>) -> Vector2<f64> {
+    // let l2 = distance.norm_sqr() + 1e-3;
+    let l2 = distance.map(|x| x * 2.0).sum() + 1e-3;
     distance * (l2.powf((-3.0) / 2.0))
 }
 
-pub fn get_gravity_at_raw_seq(pos: Vec2, bodies: &[Particle]) -> Vec2 {
+pub fn get_gravity_at_raw_seq(pos: Vector2<f64>, bodies: &[Particle]) -> Vector2<f64> {
     bodies
         .iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
         .sum()
 }
 
-pub fn get_gravity_at_raw_par(pos: Vec2, bodies: &[Particle]) -> Vec2 {
+pub fn get_gravity_at_raw_par(pos: Vector2<f64>, bodies: &[Particle]) -> Vector2<f64> {
     bodies
         .par_iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
@@ -117,8 +116,13 @@ pub fn get_gravity_at_raw_par(pos: Vec2, bodies: &[Particle]) -> Vec2 {
 
 #[cfg(test)]
 mod tests {
+    use crate::Universe;
+
     #[test]
     fn it_works() {
+        let mut universe = Universe::new(1024);
+        universe.next_state_par();
+
         assert_eq!(2 + 2, 4);
     }
 }
