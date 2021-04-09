@@ -4,13 +4,15 @@ use cgmath::{Array, Vector2, Zero};
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 
+type Vec2 = Vector2<f64>;
+
 const DT: f64 = 1e-7; // It has to be set to e-7 in order to match to the Taichi Result.
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Particle {
-    pub position: Vector2<f64>,
-    pub velocity: Vector2<f64>,
+    pub position: Vec2,
+    pub velocity: Vec2,
     pub mass: f64,
 }
 
@@ -94,20 +96,20 @@ impl Universe {
     }
 }
 
-fn gravity_func(distance: Vector2<f64>) -> Vector2<f64> {
+fn gravity_func(distance: Vec2) -> Vec2 {
     // let l2 = distance.norm_sqr() + 1e-3;
     let l2 = distance.map(|x| x * 2.0).sum() + 1e-3;
     distance * (l2.powf((-3.0) / 2.0))
 }
 
-pub fn get_gravity_at_raw_seq(pos: Vector2<f64>, bodies: &[Particle]) -> Vector2<f64> {
+pub fn get_gravity_at_raw_seq(pos: Vec2, bodies: &[Particle]) -> Vec2 {
     bodies
         .iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
         .sum()
 }
 
-pub fn get_gravity_at_raw_par(pos: Vector2<f64>, bodies: &[Particle]) -> Vector2<f64> {
+pub fn get_gravity_at_raw_par(pos: Vec2, bodies: &[Particle]) -> Vec2 {
     bodies
         .par_iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
