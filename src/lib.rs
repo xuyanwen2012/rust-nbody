@@ -14,82 +14,10 @@ pub struct Particle {
     pub mass: f64,
 }
 
-// pub struct Universe(pub Vec<Particle>);
-//
-// impl Universe {
-//     pub fn new(num_particles: usize) -> Self {
-//         let mut rng = thread_rng();
-//         let bodies0: Vec<Particle> = (0..num_particles)
-//             .map(|_| {
-//                 let a = rng.gen::<f64>() * std::f64::consts::TAU;
-//                 let r = rng.gen::<f64>().sqrt() * 0.3;
-//
-//                 let position = Vec2 {
-//                     x: a.cos() * r + 0.5,
-//                     y: a.sin() * r + 0.5,
-//                 };
-//                 let velocity = Vec2::zeros();
-//                 let mass = rng.gen::<f64>() * 1.4 + 0.1;
-//
-//                 Particle {
-//                     position,
-//                     velocity,
-//                     mass,
-//                 }
-//             })
-//             .collect();
-//         Self { 0: bodies0 }
-//     }
-//
-//     pub fn next_state_seq(&self) -> Universe {
-//         let in_bodies = &self.0;
-//
-//         let next_state = in_bodies
-//             .iter()
-//             .map(|curr: &Particle| {
-//                 let acc = get_raw_gravity_at(curr.position, in_bodies);
-//
-//                 let velocity = curr.velocity + acc * DT;
-//                 let position = curr.position + velocity;
-//
-//                 Particle {
-//                     position,
-//                     velocity,
-//                     mass: curr.mass,
-//                 }
-//             })
-//             .collect();
-//
-//         Universe { 0: next_state }
-//     }
-//
-//     pub fn next_state_par(&self) -> Universe {
-//         let in_bodies = &self.0;
-//
-//         let next_state = in_bodies
-//             .par_iter()
-//             .map(|curr: &Particle| {
-//                 let acc = get_raw_gravity_at(curr.position, in_bodies);
-//
-//                 let velocity = curr.velocity + acc * DT;
-//                 let position = curr.position + velocity;
-//
-//                 Particle {
-//                     position,
-//                     velocity,
-//                     mass: curr.mass,
-//                 }
-//             })
-//             .collect();
-//
-//         Universe { 0: next_state }
-//     }
-// }
-
 #[derive(Clone)]
 pub struct Universe {
     time: usize,
-    bodies: (Vec<Particle>, Vec<Particle>),
+    pub bodies: (Vec<Particle>, Vec<Particle>),
 }
 
 impl Universe {
@@ -173,14 +101,14 @@ fn gravity_func(distance: Vec2) -> Vec2 {
     distance * (l2.powf((-3.0) / 2.0))
 }
 
-fn get_gravity_at_raw_seq(pos: Vec2, bodies: &[Particle]) -> Vec2 {
+pub fn get_gravity_at_raw_seq(pos: Vec2, bodies: &[Particle]) -> Vec2 {
     bodies
-        .par_iter()
+        .iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
         .sum()
 }
 
-fn get_gravity_at_raw_par(pos: Vec2, bodies: &[Particle]) -> Vec2 {
+pub fn get_gravity_at_raw_par(pos: Vec2, bodies: &[Particle]) -> Vec2 {
     bodies
         .par_iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
