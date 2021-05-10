@@ -1,19 +1,19 @@
 mod qtree;
 
-use cgmath::{Array, Vector2, Zero};
+use cgmath::{Array, Point2, Vector2, Zero};
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 
-type Vec2 = Vector2<f64>;
+type Vec2 = Vector2<f32>;
 
-const DT: f64 = 1e-7; // It has to be set to e-7 in order to match to the Taichi Result.
+const DT: f32 = 1e-7; // It has to be set to e-7 in order to match to the Taichi Result.
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Particle {
-    pub position: Vec2,
-    pub velocity: Vec2,
-    pub mass: f64,
+    pub position: Point2<f32>,
+    pub velocity: Vector2<f32>,
+    pub mass: f32,
 }
 
 #[derive(Clone)]
@@ -28,15 +28,15 @@ impl Universe {
 
         let bodies0: Vec<Particle> = (0..num_particles)
             .map(|_| {
-                let a = rng.gen::<f64>() * std::f64::consts::TAU;
-                let r = rng.gen::<f64>().sqrt() * 0.3;
+                let a = rng.gen::<f32>() * std::f32::consts::TAU;
+                let r = rng.gen::<f32>().sqrt() * 0.3;
 
-                let position = Vector2 {
+                let position = Point2 {
                     x: a.cos() * r + 0.5,
                     y: a.sin() * r + 0.5,
                 };
                 let velocity = Vector2::zero();
-                let mass = rng.gen::<f64>() * 1.4 + 0.1;
+                let mass = rng.gen::<f32>() * 1.4 + 0.1;
 
                 Particle {
                     position,
@@ -98,18 +98,18 @@ impl Universe {
 
 fn gravity_func(distance: Vec2) -> Vec2 {
     // let l2 = distance.norm_sqr() + 1e-3;
-    let l2 = distance.map(|x| x * 2.0).sum() + 1e-3;
-    distance * (l2.powf((-3.0) / 2.0))
+    let l2 = distance.map(|x| x * 2.0f32).sum() + 1e-3f32;
+    distance * (l2.powf((-3.0f32) / 2.0f32))
 }
 
-pub fn get_gravity_at_raw_seq(pos: Vec2, bodies: &[Particle]) -> Vec2 {
+pub fn get_gravity_at_raw_seq(pos: Point2<f32>, bodies: &[Particle]) -> Vec2 {
     bodies
         .iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
         .sum()
 }
 
-pub fn get_gravity_at_raw_par(pos: Vec2, bodies: &[Particle]) -> Vec2 {
+pub fn get_gravity_at_raw_par(pos: Point2<f32>, bodies: &[Particle]) -> Vec2 {
     bodies
         .par_iter()
         .map(|p| gravity_func(p.position - pos) * p.mass)
