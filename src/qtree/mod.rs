@@ -180,6 +180,76 @@ impl<'a, T: Bounded> QuadTree<'a, T> {
             None
         }
     }
+
+    /// Returns an iterator over elements near a given element, which may or may not be in the quadtree.
+    pub fn query(&'a self, element: &'a T) -> QueryItems<'a, T> {
+        QueryItems {
+            qt: self,
+            index: 0,
+            element,
+            next_qts: Vec::new(),
+        }
+    }
+}
+
+/// An iterator over all elements in the quadtree.
+pub struct Items<'a, T> {
+    root: &'a QuadTree<'a, T>,
+    quadrants: Vec<Quadrant>,
+    element_index: usize,
+}
+
+/// An iterator over elements near a given query element.
+pub struct QueryItems<'a, T> {
+    qt: &'a QuadTree<'a, T>,
+    index: usize,
+    element: &'a T,
+    next_qts: Vec<&'a QuadTree<'a, T>>,
+}
+
+impl<'a, T: Bounded> Iterator for Items<'a, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<&'a Self::Item> {
+        let mut node = self.root;
+        for &quadrant in self.quadrants.iter() {
+            match node.children {
+                None => unreachable!(),
+                Some(ref children) => node = &*children[quadrant.to_usize()],
+            }
+        }
+
+        if self.element_index < node.elements.len() {
+            let &element = node.elements.get(self.element_index);
+            self.element_index += 1;
+            return Some(element);
+        }
+
+        match node.children {
+            Some(_) => {
+                self.quadrants.push(Quadrant::TL);
+                self.element_index = 0;
+                self.next()
+            }
+            None => {
+                let mut last_index = Quadrant::BL;
+                while last_index == Quadrant::BL {
+                    match self.quadrants.pop() {
+                        Some(i) => last_index = i,
+                        None => return None,
+                    };
+                }
+                self.quadrants.push(match last_index {
+                    Quadrant::TL => Quadrant::TR,
+                    Quadrant::TR => Quadrant::BR,
+                    Quadrant::BR => Quadrant::BL,
+                    Quadrant::BL => unreachable!(),
+                });
+                self.element_index = 0;
+                self.next()
+            }
+        }
+    }
 }
 
 #[cfg(test)]
